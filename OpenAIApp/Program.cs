@@ -2,6 +2,7 @@
 
 using System.Globalization;
 using System.Net.Http.Headers;
+using System.Numerics;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
@@ -25,6 +26,8 @@ static string? CallOpenAI(int tokens, string input, string engine, double temper
 {
     var openAiKey = configuration["API_KEY"];
 
+    // https://beta.openai.com/docs/api-reference/introduction
+    // TODO: The Engines endpoints are deprecated. Please use their replacement, Models, instead.
     var apiCall = "https://api.openai.com/v1/engines/" + engine + "/completions";
 
     try
