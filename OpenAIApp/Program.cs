@@ -14,8 +14,7 @@ do
     // Console.WriteLine("Ask a Question:");
     // var question = Console.ReadLine();
     //
-    // //call OpenAI
-    // var answer = CallOpenAI(250, question, "text-davinci-002", 0.7, 1, 0, 0, configuration);
+    // var answer = AskQuestion(250, question, "text-davinci-002", 0.7, 1, 0, 0, configuration);
     // Console.WriteLine(answer);
     // Console.WriteLine("Do you want to ask another question? (y/n)");
 
@@ -23,26 +22,23 @@ do
     var prompt = Console.ReadLine();
     var imagesNumber = 2; // hardcoded
 
-    //call OpenAI
-    var answer = CreateImage(prompt, imagesNumber, "512x512", configuration);
-    Console.WriteLine(answer);
+    var urls = CreateImage(prompt, imagesNumber, "512x512", configuration);
 
-    Process.Start(new ProcessStartInfo
+    foreach (var url in urls)
     {
-        FileName = answer[0],
-        UseShellExecute = true
-    });
-    Process.Start(new ProcessStartInfo
-    {
-        FileName = answer[1],
-        UseShellExecute = true
-    });
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        });
 
+        Console.WriteLine(url);
+    }
     Console.WriteLine("Do you want to generate new image? (y/n)");
 } while (Console.ReadLine() != "n");
 
 
-static string? CallOpenAI(int tokens, string input, string engine, double temperature, int topP, int frequencyPenalty, int presencePenalty, IConfiguration configuration)
+static string? AskQuestion(int tokens, string input, string engine, double temperature, int topP, int frequencyPenalty, int presencePenalty, IConfiguration configuration)
 {
     var openAiKey = configuration["API_KEY"];
 
@@ -105,23 +101,18 @@ static List<string> CreateImage(string prompt, int imagesNumber, string size, IC
                 var response = httpClient.SendAsync(request).Result;
                 var json = response.Content.ReadAsStringAsync().Result;
 
-                dynamic dynObj = JsonConvert.DeserializeObject(json);
+                var dynamicObject = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(json);
 
-                if (dynObj != null)
+                if (dynamicObject != null)
                 {
-                    urls.Add(dynObj.data[0].url.ToString());
-                    urls.Add(dynObj.data[1].url.ToString());
-                    // foreach (var element in dynObj.data[0].url)
-                    // {
-                    //     urls.Add(element);
-                    // }
-
+                    foreach (var element in dynamicObject["data"])
+                    {
+                        urls.Add(element["url"].ToString());
+                    }
                     return urls;
                 }
-
             }
         }
-
     }
     catch (Exception ex)
     {
