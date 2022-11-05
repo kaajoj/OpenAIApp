@@ -8,30 +8,43 @@ IConfiguration configuration = new ConfigurationBuilder()
 
 do
 {
-    Console.WriteLine("Ask a Question:");
-    var question = Console.ReadLine();
-    
-    var answer = OpenAI.AskQuestion(250, question, "text-davinci-002", 0.7, 1, 0, 0, configuration);
-    Console.WriteLine(answer);
-    Console.WriteLine("Do you want to ask another question? (y/n)");
+    Console.WriteLine("Press 1 to ask question");
+    Console.WriteLine("Press 2 to generate image");
+    var userSelection = Console.ReadLine();
 
-    Console.WriteLine("Create new image:");
-    var prompt = Console.ReadLine();
-    var imagesNumber = 2; // hardcoded
-
-    var urls = OpenAI.CreateImage(prompt, imagesNumber, "512x512", configuration);
-
-    foreach (var url in urls)
+    switch (userSelection)
     {
-        Process.Start(new ProcessStartInfo
+        case "1":
         {
-            FileName = url,
-            UseShellExecute = true
-        });
+            Console.WriteLine("Ask a Question:");
+            var question = Console.ReadLine();
 
-        Console.WriteLine(url);
+            var answer = OpenAI.AskQuestion(250, question, "text-davinci-002", 0.7, 1, 0, 0, configuration);
+            Console.WriteLine(answer);
+            break;
+        }
+        case "2":
+        {
+            Console.WriteLine("Input image description to create new image:");
+            var prompt = Console.ReadLine();
+            var imagesNumber = 5; // hardcoded
+
+            var urls = OpenAI.CreateImage(prompt, imagesNumber, "512x512", configuration);
+
+            foreach (var url in urls)
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+
+                Console.WriteLine(url);
+            }
+            break;
+        }
     }
-    Console.WriteLine("Do you want to generate new image? (y/n)");
+    Console.WriteLine("Do you want to ask another question or generate new image? (y/n)");
 } while (Console.ReadLine() != "n");
 
 
