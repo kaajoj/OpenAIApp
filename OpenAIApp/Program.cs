@@ -1,9 +1,11 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Numerics;
+using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
@@ -27,6 +29,16 @@ do
     //call the open ai
     var answer = CreateImage(prompt, 2, "512x512", configuration);
     Console.WriteLine(answer);
+    Process.Start(new ProcessStartInfo
+    {
+        FileName = answer[0],
+        UseShellExecute = true
+    });
+    Process.Start(new ProcessStartInfo
+    {
+        FileName = answer[1],
+        UseShellExecute = true
+    });
 
     Console.WriteLine("Do you want to generate new image? (y/n)");
 } while (Console.ReadLine() != "n");
@@ -76,15 +88,15 @@ static string? CallOpenAI(int tokens, string input, string engine, double temper
     return null;
 }
 
-static string? CreateImage(string prompt, int n, string size, IConfiguration configuration)
+static List<string> CreateImage(string prompt, int n, string size, IConfiguration configuration)
 {
     var openAiKey = configuration["API_KEY"];
-
     var apiCall = "https://api.openai.com/v1/images/generations";
+
+    var urls = new List<string>();
 
     try
     {
-
         using (var httpClient = new HttpClient())
         {
             using (var request = new HttpRequestMessage(new HttpMethod("POST"), apiCall))
@@ -101,7 +113,15 @@ static string? CreateImage(string prompt, int n, string size, IConfiguration con
 
                 if (dynObj != null)
                 {
-                    return dynObj.data.ToString();
+                    // return dynObj.data.ToString();
+                    urls.Add(dynObj.data[0].url.ToString());
+                    urls.Add(dynObj.data[1].url.ToString());
+                    // foreach (var element in dynObj.data[0].url)
+                    // {
+                    //     urls.Add(element);
+                    // }
+
+                    return urls;
                 }
 
             }
