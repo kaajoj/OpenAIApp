@@ -1,13 +1,9 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Diagnostics;
-using System.Drawing;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Headers;
-using System.Numerics;
-using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using static System.Net.Mime.MediaTypeNames;
 
 IConfiguration configuration = new ConfigurationBuilder()
     .AddUserSecrets("d9a5cd4e-7c74-46da-a5d5-7321a7d4ae95")
@@ -18,17 +14,19 @@ do
     // Console.WriteLine("Ask a Question:");
     // var question = Console.ReadLine();
     //
-    // //call the open ai
+    // //call OpenAI
     // var answer = CallOpenAI(250, question, "text-davinci-002", 0.7, 1, 0, 0, configuration);
     // Console.WriteLine(answer);
     // Console.WriteLine("Do you want to ask another question? (y/n)");
 
     Console.WriteLine("Create new image:");
     var prompt = Console.ReadLine();
-    
-    //call the open ai
-    var answer = CreateImage(prompt, 2, "512x512", configuration);
+    var imagesNumber = 2; // hardcoded
+
+    //call OpenAI
+    var answer = CreateImage(prompt, imagesNumber, "512x512", configuration);
     Console.WriteLine(answer);
+
     Process.Start(new ProcessStartInfo
     {
         FileName = answer[0],
@@ -54,7 +52,6 @@ static string? CallOpenAI(int tokens, string input, string engine, double temper
 
     try
     {
-
         using (var httpClient = new HttpClient())
         {
             using (var request = new HttpRequestMessage(new HttpMethod("POST"), apiCall))
@@ -84,11 +81,10 @@ static string? CallOpenAI(int tokens, string input, string engine, double temper
     {
         Console.WriteLine(ex.Message);
     }
-
     return null;
 }
 
-static List<string> CreateImage(string prompt, int n, string size, IConfiguration configuration)
+static List<string> CreateImage(string prompt, int imagesNumber, string size, IConfiguration configuration)
 {
     var openAiKey = configuration["API_KEY"];
     var apiCall = "https://api.openai.com/v1/images/generations";
@@ -102,8 +98,8 @@ static List<string> CreateImage(string prompt, int n, string size, IConfiguratio
             using (var request = new HttpRequestMessage(new HttpMethod("POST"), apiCall))
             {
                 request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + openAiKey);
-                request.Content = new StringContent("{\"prompt\":\"" + prompt + "\",\"n\":2,\"size\":\"" + size + "\"}");
-
+                request.Content = new StringContent("{\"prompt\":\"" + prompt + "\",\"n\": " + imagesNumber + ",\"size\":\"" + size + "\"}");
+                
                 request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
 
                 var response = httpClient.SendAsync(request).Result;
@@ -113,7 +109,6 @@ static List<string> CreateImage(string prompt, int n, string size, IConfiguratio
 
                 if (dynObj != null)
                 {
-                    // return dynObj.data.ToString();
                     urls.Add(dynObj.data[0].url.ToString());
                     urls.Add(dynObj.data[1].url.ToString());
                     // foreach (var element in dynObj.data[0].url)
