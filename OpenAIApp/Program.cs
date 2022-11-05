@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Drawing;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Numerics;
@@ -12,13 +13,22 @@ IConfiguration configuration = new ConfigurationBuilder()
 
 do
 {
-    Console.WriteLine("Ask a Question:");
-    var question = Console.ReadLine();
+    // Console.WriteLine("Ask a Question:");
+    // var question = Console.ReadLine();
+    //
+    // //call the open ai
+    // var answer = CallOpenAI(250, question, "text-davinci-002", 0.7, 1, 0, 0, configuration);
+    // Console.WriteLine(answer);
+    // Console.WriteLine("Do you want to ask another question? (y/n)");
 
+    Console.WriteLine("Create new image:");
+    var prompt = Console.ReadLine();
+    
     //call the open ai
-    var answer = CallOpenAI(250, question, "text-davinci-002", 0.7, 1, 0, 0, configuration);
+    var answer = CreateImage(prompt, 2, "512x512", configuration);
     Console.WriteLine(answer);
-    Console.WriteLine("Do you want to ask another question? (y/n)");
+
+    Console.WriteLine("Do you want to generate new image? (y/n)");
 } while (Console.ReadLine() != "n");
 
 
@@ -52,6 +62,46 @@ static string? CallOpenAI(int tokens, string input, string engine, double temper
                 if (dynObj != null)
                 {
                     return dynObj.choices[0].text.ToString();
+                }
+
+            }
+        }
+
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
+
+    return null;
+}
+
+static string? CreateImage(string prompt, int n, string size, IConfiguration configuration)
+{
+    var openAiKey = configuration["API_KEY"];
+
+    var apiCall = "https://api.openai.com/v1/images/generations";
+
+    try
+    {
+
+        using (var httpClient = new HttpClient())
+        {
+            using (var request = new HttpRequestMessage(new HttpMethod("POST"), apiCall))
+            {
+                request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + openAiKey);
+                request.Content = new StringContent("{\"prompt\":\"" + prompt + "\",\"n\":2,\"size\":\"" + size + "\"}");
+
+                request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+
+                var response = httpClient.SendAsync(request).Result;
+                var json = response.Content.ReadAsStringAsync().Result;
+
+                dynamic dynObj = JsonConvert.DeserializeObject(json);
+
+                if (dynObj != null)
+                {
+                    return dynObj.data.ToString();
                 }
 
             }
